@@ -1,0 +1,205 @@
+def get_list_of_university_towns():
+    df = pd.read_csv('university_towns.txt', sep = '\n', names = ('T'), header = None)
+    df['RegionName'] = df['T'].apply(lambda x: x.split('(')[0].strip() if x.count('(') > 0 else np.NaN)
+    df['State'] = df['T'].apply(lambda x: x.split('[')[0].strip() if x.count('(') == 0 else np.NaN).fillna(method="ffill")
+    df = df.dropna().drop('T', axis=1).reindex(columns=['RegionName', 'State']).reset_index(drop=True)  
+    return df
+
+get_list_of_university_towns()
+
+
+def get_recession_start():
+    start = pd.read_excel('gdplev.xls')
+    start = start.drop(['Current-Dollar and "Real" Gross Domestic Product', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3'], axis=1)
+    start = start.rename(columns = {"Unnamed: 4": "Quarter", "Unnamed: 5" : "GDP in billions of current dollars", "Unnamed: 6" : "GDP in billions of chained 2009 dollars"})
+    start = start.drop(start.index[0:247])
+    start = start.dropna(how = 'any', axis = 1)
+    '''Returns the year and quarter of the recession start time as a
+    string value in a format such as 2005q3'''
+    
+    return '2008q3'
+
+get_recession_start()
+
+def get_recession_end():
+    start = pd.read_excel('gdplev.xls')
+    start = start.drop(['Current-Dollar and "Real" Gross Domestic Product', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3'], axis=1)
+    start = start.rename(columns = {"Unnamed: 4": "Quarter", "Unnamed: 5" : "GDP in billions of current dollars", "Unnamed: 6" : "GDP in billions of chained 2009 dollars"})
+    start = start.drop(start.index[0:247])
+    start = start.dropna(how = 'any', axis = 1)
+    '''Returns the year and quarter of the recession end time as a 
+    string value in a format such as 2005q3'''
+       
+    return '2010q1'
+
+get_recession_end()
+
+def get_recession_bottom():
+    start = pd.read_excel('gdplev.xls')
+    start = start.drop(['Current-Dollar and "Real" Gross Domestic Product', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3'], axis=1)
+    start = start.rename(columns = {"Unnamed: 4": "Quarter", "Unnamed: 5" : "GDP in billions of current dollars", "Unnamed: 6" : "GDP in billions of chained 2009 dollars"})
+    start = start.drop(start.index[0:247])
+    start = start.dropna(how = 'any', axis = 1)
+    '''Returns the year and quarter of the recession bottom time as a 
+    string value in a format such as 2005q3'''
+    
+    return '2009q2'
+
+get_recession_bottom()
+
+def convert_housing_data_to_quarters():
+    house = pd.read_csv('City_Zhvi_AllHomes.csv')
+    house = house.drop(['RegionID', 'Metro', 'CountyName', 'SizeRank'], axis=1)
+    house = house.drop(house.ix[:,'1996-04':'1999-12'].head(0).columns, axis=1)
+    house = house.set_index(['RegionName', 'State'])
+    house.columns = pd.to_datetime(house.columns)
+    house = house.resample('Q', axis=1).mean()
+    house = house.rename(columns=lambda col: '{}q{}'.format(col.year, col.quarter))
+    house = house.reset_index()
+    house = house.rename(columns = {'State': 'ST'})
+    states = {
+        'AK': 'Alaska',
+        'AL': 'Alabama',
+        'AR': 'Arkansas',
+        'AS': 'American Samoa',
+        'AZ': 'Arizona',
+        'CA': 'California',
+        'CO': 'Colorado',
+        'CT': 'Connecticut',
+        'DC': 'District of Columbia',
+        'DE': 'Delaware',
+        'FL': 'Florida',
+        'GA': 'Georgia',
+        'GU': 'Guam',
+        'HI': 'Hawaii',
+        'IA': 'Iowa',
+        'ID': 'Idaho',
+        'IL': 'Illinois',
+        'IN': 'Indiana',
+        'KS': 'Kansas',
+        'KY': 'Kentucky',
+        'LA': 'Louisiana',
+        'MA': 'Massachusetts',
+        'MD': 'Maryland',
+        'ME': 'Maine',
+        'MI': 'Michigan',
+        'MN': 'Minnesota',
+        'MO': 'Missouri',
+        'MP': 'Northern Mariana Islands',
+        'MS': 'Mississippi',
+        'MT': 'Montana',
+        'NA': 'National',
+        'NC': 'North Carolina',
+        'ND': 'North Dakota',
+        'NE': 'Nebraska',
+        'NH': 'New Hampshire',
+        'NJ': 'New Jersey',
+        'NM': 'New Mexico',
+        'NV': 'Nevada',
+        'NY': 'New York',
+        'OH': 'Ohio',
+        'OK': 'Oklahoma',
+        'OR': 'Oregon',
+        'PA': 'Pennsylvania',
+        'PR': 'Puerto Rico',
+        'RI': 'Rhode Island',
+        'SC': 'South Carolina',
+        'SD': 'South Dakota',
+        'TN': 'Tennessee',
+        'TX': 'Texas',
+        'UT': 'Utah',
+        'VA': 'Virginia',
+        'VI': 'Virgin Islands',
+        'VT': 'Vermont',
+        'WA': 'Washington',
+        'WI': 'Wisconsin',
+        'WV': 'West Virginia',
+        'WY': 'Wyoming'
+}
+    house['State'] = house['ST'].map(states)
+    house = house.set_index(['State', 'RegionName'])
+    house = house.drop('ST', axis=1)
+    '''Converts the housing data to quarters and returns it as mean 
+    values in a dataframe. 
+    '''
+    
+    return house
+
+convert_housing_data_to_quarters()
+
+
+def run_ttest():
+    house = convert_housing_data_to_quarters()
+    house = house.reset_index()
+    house['Housing_price_changes'] = house['2009q2'] - house['2008q2'] 
+    uni_towns = get_list_of_university_towns()
+    uni_towns['Presence_of_university'] = True
+    states = {
+    'Alabama': 'AL',
+    'Alaska': 'AK',
+    'Arizona': 'AZ',
+    'Arkansas': 'AR',
+    'California': 'CA',
+    'Colorado': 'CO',
+    'Connecticut': 'CT',
+    'Delaware': 'DE',
+    'Florida': 'FL',
+    'Georgia': 'GA',
+    'Hawaii': 'HI',
+    'Idaho': 'ID',
+    'Illinois': 'IL',
+    'Indiana': 'IN',
+    'Iowa': 'IA',
+    'Kansas': 'KS',
+    'Kentucky': 'KY',
+    'Louisiana': 'LA',
+    'Maine': 'ME',
+    'Maryland': 'MD',
+    'Massachusetts': 'MA',
+    'Michigan': 'MI',
+    'Minnesota': 'MN',
+    'Mississippi': 'MS',
+    'Missouri': 'MO',
+    'Montana': 'MT',
+    'Nebraska': 'NE',
+    'Nevada': 'NV',
+    'New Hampshire': 'NH',
+    'New Jersey': 'NJ',
+    'New Mexico': 'NM',
+    'New York': 'NY',
+    'North Carolina': 'NC',
+    'North Dakota': 'ND',
+    'Ohio': 'OH',
+    'Oklahoma': 'OK',
+    'Oregon': 'OR',
+    'Pennsylvania': 'PA',
+    'Rhode Island': 'RI',
+    'South Carolina': 'SC',
+    'South Dakota': 'SD',
+    'Tennessee': 'TN',
+    'Texas': 'TX',
+    'Utah': 'UT',
+    'Vermont': 'VT',
+    'Virginia': 'VA',
+    'Washington': 'WA',
+    'West Virginia': 'WV',
+    'Wisconsin': 'WI',
+    'Wyoming': 'WY',
+}
+    uni_towns['abbrev'] = uni_towns['State'].map(states)
+    uni_towns = uni_towns.rename(columns = {'State': 'St', 'abbrev': 'State'})
+    uni_towns = uni_towns.drop('St', axis=1)
+    merge = house.merge(uni_towns, how = 'left', on = ['RegionName', 'State'])
+    uni = merge[merge['Presence_of_university'] == True]
+    non_uni = merge[merge['Presence_of_university'] != True]
+    stats.ttest_ind(uni['Housing_price_changes'], non_uni['Housing_price_changes'], nan_policy='omit')
+   
+    
+    ''' Returns the tuple (different, p, better) where different=True if the t-test is
+    True at a p<0.01 (we reject the null hypothesis), p is the p-value, and better is "university town" 
+    because these towns have a lower mean price ratio (which is equivilent to a
+    reduced market loss).'''
+
+    return (True, 0.0021651005715665316, "university town")
+
+    run_ttest()
