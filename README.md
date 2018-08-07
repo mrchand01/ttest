@@ -1,6 +1,5 @@
 # ttest
-Running a hypothesis test
-Hypothesis: University town's mean housing prices were less effected by the 2007-08 recession.
+Hypothesis: University town's mean housing prices were less effected by the 2007-08 recession than non-university towns.
 
 Datasets used 
 1) Zillow housing data for the United States. 
